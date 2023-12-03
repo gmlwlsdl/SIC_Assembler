@@ -5,7 +5,7 @@
 #define MAX_LINES 100
 #define MAX_WORDS 10
 
-struct Log {
+struct Log { // input code의 각 라인을 구조체화 시켜 저장
     int A;
     int X;
     int L;
@@ -14,14 +14,15 @@ struct Log {
 };
 
 int A = 0, X = 0, L = 0, PC = 0, SW = 0;
-int wordCount = 1;
-int line_count = 0;
+int wordCount = 1; // WORD 갯수
+int line_count = 0; // input code의 line 개수
 char num[MAX_WORDS][500];
 int cnt = 0;
 int TMP = 0;
 
-// "WORD" 키워드를 처리하는 함수
 void processFullLine(char *line) {
+
+    // "WORD" 키워드를 처리
     char *wordKeyword = strstr(line, "WORD");
 
     if (wordKeyword != NULL) {
@@ -38,32 +39,34 @@ void processFullLine(char *line) {
         }
     }
 
+    // "RESW" 키워드를 처리
     char *reswKeyword = strstr(line, "RESW");
 
-    if(reswKeyword != NULL) {
+    if (reswKeyword != NULL) {
         reswKeyword += strlen("RESW") + 1;
         TMP = atoi(reswKeyword);
-        printf("%s Type : RESW\n");
+        printf("%s Type : RESW\n", line);
     }
 }
 
-// 한 줄을 처리하고 "START"를 찾아 PC를 업데이트하는 함수
 void processLine(char *line, struct Log *registers) {
+
+    // 한 줄을 처리하고 "START"를 찾아 PC를 업데이트
     char *startKeyword = strstr(line, "START");
 
     if (startKeyword != NULL) {
         startKeyword += strlen("START") + 1;
         PC = atoi(startKeyword);
         registers->PC = PC;
-    } else if (cnt==1){
+    } else if (cnt == 1) {
         PC += 0;
         registers->PC = PC;
-    } 
-    else if(cnt>1) {
+    } else if (cnt > 1) {
         PC += 3;
         registers->PC = PC;
     }
 
+    // "LDA" 키워드 처리 후 변수에 맞는 값 불러옴
     char *ldaKeyword = strstr(line, "LDA");
 
     if (ldaKeyword != NULL) {
@@ -79,12 +82,12 @@ void processLine(char *line, struct Log *registers) {
             registers->A = A;
             ptr = strtok(NULL, " ");
         }
-    } else if (ldaKeyword == NULL){
+    } else {
         A += 0;
         registers->A = A;
     }
 
-    // 다른 레지스터 업데이트가 필요한 경우 추가
+    // 레지스터 구조체 업데이트
     registers->X = X;
     registers->L = L;
     registers->SW = SW;
@@ -92,7 +95,7 @@ void processLine(char *line, struct Log *registers) {
     cnt++;
 }
 
-// 레지스터 값을 출력하는 함수
+// 레지스터 값을 출력
 void printRegisters(struct Log *registers) {
     printf("A: %d\n", registers->A);
     printf("X: %d\n", registers->X);
@@ -102,16 +105,16 @@ void printRegisters(struct Log *registers) {
 }
 
 int main() {
-    FILE *file = NULL;
+    FILE *fileSymbols = fopen("code.txt", "r");
     char mem[MAX_LINES][500];
     struct Log registers[MAX_LINES];
 
-    file = fopen("code.txt", "r");
-
     printf("[Symbols]\n");
 
-    if (file != NULL) {
-        while (fgets(mem[line_count], sizeof(mem[0]), file) != NULL) {
+    if (fileSymbols != NULL) {
+        
+        // input code를 전체적으로 훑어 미리 필요한 값을 세팅
+        while (fgets(mem[line_count], sizeof(mem[0]), fileSymbols) != NULL) {
             size_t len = strlen(mem[line_count]);
             if (len > 0 && mem[line_count][len - 1] == '\n') {
                 mem[line_count][len - 1] = '\0';
@@ -121,13 +124,13 @@ int main() {
             line_count++;
         }
 
-        fclose(file);
+        fclose(fileSymbols);
         line_count = 0;
 
-        file = fopen("code.txt", "r");
+        FILE *fileCode = fopen("code.txt", "r");
 
-        if (file != NULL) {
-            while (fgets(mem[line_count], sizeof(mem[0]), file) != NULL) {
+        if (fileCode != NULL) {
+            while (fgets(mem[line_count], sizeof(mem[0]), fileCode) != NULL) {
                 size_t len = strlen(mem[line_count]);
                 if (len > 0 && mem[line_count][len - 1] == '\n') {
                     mem[line_count][len - 1] = '\0';
@@ -143,7 +146,7 @@ int main() {
                 line_count++;
             }
 
-            fclose(file);
+            fclose(fileCode);
 
             for (int i = 0; i < line_count; i++) {
                 printf("\nRegisters for Line %d:\n", i + 1);
